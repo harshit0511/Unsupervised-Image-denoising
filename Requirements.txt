@@ -1,1 +1,4 @@
 opencv-python
+Tensorflow
+Keras
+scikit-optimize

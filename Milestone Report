@@ -1,0 +1,190 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subfig}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+\title{\textbf{Unsupervised Image Denoising using Deep Learning}}
+\author{
+  Harshit Srivastava\\
+  \texttt{hs3500@nyu.edu}
+  \and
+  Akshat Tyagi\\
+  \texttt{at3761@nyu.edu}
+  \and
+  Anurag Marwah\\
+  \texttt{am8482@nyu.edu}
+}
+\date{New York University - Fall 2018}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Recent advances in deep neural networks have sparked significant interest in denoising techniques without using any well-curated mathematical model to remove noise. Noisy images can be cleaned using clean images as target images and training a neural network on the (noisy, clean) pair but as we show in this project, similar results can be achieved by using (noisy, noisy) pairs as long as the underlying image remains the same. The loss functions for both methods can be defined as:
+
+$$ Supervised: \sum_i L(f(noisy_i| \theta), clean_i) $$
+$$ Unsupervised: \sum_i L(f(noisy_{1, i}| \theta), noisy_{2, i}) $$
+The image denoiser could have applications in a plethora of domains, including military and healthcare, where clean target images are not readily available or take significant amount of human intervention to denoise them.
+
+\section{Related work}
+
+-talk about other papers published on similar topic and evaluate them.
+
+Previous techniques have existed where deep neural networks were used to denoise images \citep{DBLP:journals/corr/MaoSY16a} but these methods have relied on clean images for training. Denoising the image using corrupted target images was performed recently where Lethtinen et al., 2018 \citep{DBLP:journals/corr/abs-1803-04189} showed that clean images are not necessary for denoising images, which can be applied to a wide range of areas. As far as the architecture is concerned, we used a U-net which is essentially a combination of Convolutional neural networks, pooling, ReLu activation in a U-shaped architecture \citep{DBLP:journals/corr/RonnebergerFB15} with deconvolutional units which generate the output in the shape of an image and has been widely used for cases where outputs are required to be images. We used code segments from an unofficial implementation of the Noise2Noise paper \citep{yu4u}. We used the pre-built network but used our own image dataset and experimented with hyper-parameters to come up with the results.
+
+\section{Problem formulation}
+
+elongate using original paper (give some theoretical background)
+how is the image getting denoised without seeing actual image (expectation)
+
+The objective is to apply synthetic noise on the image dataset, train the network, recover the images using the trained graph and observe the recovery loss. Different noise settings were used for source and target images but since the underlying image was the same, clean images were restored. We depreciated the size of the image to 128 x 128 to account for computing issues which may have been encountered on using too many features. At the same time, low-resolution images could not be used for this task as denoising might not be effective.
+
+\section{Methods}
+
+U-NET, SRRESNET (screenshot), Bayesian optimization (theory behind it)
+add subsection about Bayesian learning
+
+We have used a U-NET to perform Image denoising to remove Gaussian noise and Textual noise from an image. To do this, we used the IMAGENET dataset \citep{imagenet_cvpr09} and trained on 290 images from this dataset. We trained the network for around 15-20 epochs for one particular level of noise. We measured our performance using PSNR (Peak Signal Noise Ratio). For each task we performed, we used a different loss function. We used $ L_2 $ loss for Gaussian noise removal, $ L_1 $ error for Textual Noise removal, and $ L_0 $ Loss for Random Impulse noise removal.
+$$ L_0 : \frac{1}{N} \sum_{i} \lim_{p\to 0} \sqrt[p]{(y_i)^p} $$
+$$ L_1 : \frac{1}{N} \sum_i |y - y_i| $$
+$$ L_2 : \frac{1}{N} \sum_i \sqrt{(y -y_i)^2} $$
+
+\subsection{Noise models}
+
+elongate using original paper
+
+{\bf Gaussian noise} model was obtained by sampling from a gaussian distribution with a constant mean but differing variances corresponding to the noise level.
+\\
+{\bf Random Valued Impulse noise} was added using a mask to add on to the original image. The mask contained values generated from binomial distribution whose probability came from a uniform distribution. The maximum occupancy was tried up to 100 where image was almost completely covered in noise and wasn't able to recover back to its original state.
+\\
+{\bf Textual noise} was added using Uniform distribution to decide on the amount of space to be occupied by random texts. The target images in this case were peppered with similar noise model but since the added text and the occupancy is randomly allocated, train and test images were distinct. The maximum number of words in the image was tried up to 75 where much of the information was getting lost.
+
+
+\section{Architecture and design}
+
+add SRRESNET
+
+We implemented U-Net to train the network in this part, we plan on using other architectures, specially SRRESNET \citep{DBLP:journals/corr/LimSKNL17} in coming days. Figure (1) was generated using Tensorboard after training the network. The actual graph on tensorboard contained a lot of nodes as the network was very deep but this image shows a brief overview of our network. We experimented with different number of hidden layers and the same graph can be extended for deeper networks as well. Up-sampling was done by performing deconvolution which was implemented using Conv2DTranspose in keras.
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.25]{Computational_graph}
+\caption{U-shaped network used for training}
+
+
+\label{fig:1}
+\end{figure}
+
+\section{Results}
+
+Add clean target training trend
+Add screenshots of noise removal
+
+{\bf GitHub repository} : {\href{https://github.com/harshit0511/Unsupervised-Image-denoising}{github.com/harshit0511/Unsupervised-Image-denoising}}
+
+We experimented by increasing the noise level until the original image was not recovered. PSNR values of below ~13 were obtained for recovered images that were not denoised properly and were beyond recognition. Fig. 2 shows images which were denoised using our network. Fig. 3 shows the trend of denoising as we increased the level of noise on input images. Interestingly, as we kept on increasing the noise, denoising was also gradually decreasing as depicted by the PSNR values. We would like to further experiment with hyper-parameters of this network and use some other well-known architectures and see how they compare with U-Net on Image denoising task.
+
+
+\begin{figure}[h!]
+    \centering
+
+    \begin{subfigure}
+        \includegraphics[scale=0.25]{gaussian_bird_GT.png}
+        \subcaption{Gaussian Noise ($ \mu = 0, \sigma = 50$)}
+        \label{fig:bird1}
+    \end{subfigure}
+
+    \begin{subfigure}
+        \includegraphics[scale=0.25]{raondom_bird_GT.png}
+        \subcaption{Random Impulse Noise (0, 50)}
+        \label{fig:bird3}
+    \end{subfigure}
+
+    \begin{subfigure}
+        \includegraphics[scale=0.25]{bird_GT.png}
+        \subcaption{Textual Noise (0, 50)}
+        \label{fig:bird2}
+    \end{subfigure}
+
+    \caption{Images on the left are the ground truth image, images in the middle are the generated noisy images which are used as source and target images, images on the right were the denoised images generated by the trained network. }\label{fig:results}
+\end{figure}
+
+
+\begin{figure}[h!]
+    \centering
+
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{gaussian_psnr.png}
+        %\subcaption{Gaussian noise}
+        \label{fig:val1}
+    \end{subfigure}
+    ~
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{gaussian_loss.png}
+        %\subcaption{Gaussian noise}
+        \label{fig:val1}
+    \end{subfigure}
+    ~
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{random_psnr.png}
+        %\subcaption{Random impulse noise}
+        \label{fig:val3}
+    \end{subfigure}
+    ~
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{random_loss.png}
+        %\subcaption{Random impulse noise}
+        \label{fig:val3}
+    \end{subfigure}
+    -
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{textual_psnr.png}
+        %\subcaption{Textual noise}
+        \label{fig:val2}
+    \end{subfigure}
+    ~
+    \begin{subfigure}
+        \includegraphics[scale=0.24]{textual_loss.png}
+        %\subcaption{Random impulse noise}
+        \label{fig:val3}
+    \end{subfigure}
+    ~
+    \caption{Plots depicting the change in PSNR Values on the validation set as we increased the noise on the images. It was interesting to note that as we increased the intensity of noise on the images, we got a gradually decreasing PSNR as opposed to a sudden decline after a certain threshold.) }\label{fig:val}
+\end{figure}
+
+
+% \onecolumn
+% \fakesection
+%\begin{figure}[h!]
+%\centering
+%\caption{Gaussian Noise ($ \mu = 0, \sigma = 50$)} %\label{fig:1a}
+%\includegraphics[scale=0.25]{gaussian_bird_GT.png}
+
+%\caption{Textual Noise} \label{fig:1b}
+%\includegraphics[scale=0.25]{bird_GT.png}
+
+%\caption{Random Impulse Noise} \label{fig:1c}
+%\includegraphics[scale=0.25]{raondom_bird_GT.png}
+
+%\label{fig:1}
+%\end{figure}
+
+\section{Future Work}
+
+Noise distribution has to be known
+Talk about one of the papers published
+
+We would like to use another model (SRRESNET) to perform noise removal for gaussian, random and textual noise. We can then compare the performance of the two neural networks. We would also like to train the network for more epochs and for that, we will utilize NYU HPC Cluster environment. Ideally, we would like to train the network for at least 40 epochs. Finally, we will try to formulate our own network for performing noise removal and compare the results with both SSRESNET and U-NET.
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
